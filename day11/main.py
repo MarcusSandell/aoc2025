@@ -3,54 +3,38 @@ from functools import lru_cache
 with open("day11/input.txt") as f:
     nodes = {l.split(": ")[0]: l.strip().split(" ")[1:] for l in f.readlines()}
 
-def get_paths(pos:str, path: list):
+# def get_paths(pos:str, path: list):
 
-    path.append(pos)
+#     path.append(pos)
 
-    if pos == "out":
-        return [path]
+#     if pos == "out":
+#         return [path]
 
-    connections = nodes[pos]
+#     connections = nodes[pos]
 
-    paths = []
-    for c in connections:
-        if c not in path:
-            x = path.copy()
-            paths.extend(get_paths(c, x))
+#     paths = []
+#     for c in connections:
+#         if c not in path:
+#             x = path.copy()
+#             paths.extend(get_paths(c, x))
 
-    return paths
+#     return paths
 
 # paths = get_paths("you", [])
 # print(f"Part 1: {len(paths)}")
 
+@lru_cache
+def get_nbr_of_paths(src, dst):
+    if src == dst:
+        return 1
+    if src == "out":
+        return 0
 
+    return sum(get_nbr_of_paths(x, dst) for x in nodes[src])
 
-def part2():
-    nodes_tuple = {k: tuple(v) for k, v in nodes.items()}
-    
-    @lru_cache(maxsize=None)
-    def count_paths_through(pos: str, seen_fft: bool, seen_dac: bool):
-        
-        if pos == "end":
-            # Only count if we've visited both required nodes
-            return 1 if seen_fft and seen_dac else 0
-        
-        if pos not in nodes_tuple:
-            return 0
-        
-        # Update flags if we're at a required node
-        seen_fft = seen_fft or pos == "fft"
-        seen_dac = seen_dac or pos == "dac"
-        
-        connections = nodes_tuple[pos]
-        
-        total = 0
-        for c in connections:
-            total += count_paths_through(c, seen_fft, seen_dac)
-        
-        return total
-    
-    count = count_paths_through("svr", False, False)
-    print(f"Part 2: {count}")
+print(f"Part 1: {get_nbr_of_paths("you", "out")}")
 
-part2()
+part2 = get_nbr_of_paths("svr", "fft") * get_nbr_of_paths("fft", "dac") * get_nbr_of_paths("dac", "out")
+part2 += get_nbr_of_paths("svr", "dac") * get_nbr_of_paths("dac", "fft") * get_nbr_of_paths("fft", "out")
+
+print(f"Part 2: {part2}")
